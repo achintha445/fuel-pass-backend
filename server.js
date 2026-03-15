@@ -1,22 +1,31 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose'); // New tool for Database
 const app = express();
 
-app.use(cors()); // This allows your GitHub site to talk to this Railway site
+app.use(cors());
 app.use(express.json());
 
-app.post('/api/register', (req, res) => {
+// 1. Connect to the Database
+mongoose.connect(process.env.MONGODB_URL);
+
+// 2. Create the "List" format (Schema)
+const User = mongoose.model('User', {
+    nic: String,
+    vehicleNo: String,
+    date: { type: Date, default: Date.now }
+});
+
+app.post('/api/register', async (req, res) => {
     const { nic, vehicleNo } = req.body;
-    
-    // This is the "Engine" logic
-    console.log(`ලියාපදිංචි කිරීම: ${nic} for ${vehicleNo}`);
-    
-    res.json({
-        status: "Success",
-        message: "දත්ත ගබඩා කරන ලදී (Data Saved)",
-        quota: 15
-    });
+
+    // 3. SAVE to the Database
+    const newUser = new User({ nic, vehicleNo });
+    await newUser.save();
+
+    console.log(`Saved to Database: ${nic}`);
+    res.json({ status: "Success", message: "Data Saved Permanently" });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT);
